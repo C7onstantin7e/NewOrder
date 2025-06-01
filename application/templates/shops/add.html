@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление магазина{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Добавление магазина</h2>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('shops.add_shop') }}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.address.label(class="form-label") }}
+                    {{ form.address(class="form-control") }}
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('shops.list_shops') }}" class="btn btn-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

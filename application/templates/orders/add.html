@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Новый заказ</h2>
+
+    <form method="POST" id="order-form">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.shop_id.label(class="form-label") }}
+            {{ form.shop_id(class="form-select") }}
+        </div>
+
+        <h4>Товары:</h4>
+
+        <div id="items-container">
+            {% for item in form.items %}
+            <div class="item-row mb-3 border p-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ item.product_id.label(class="form-label") }}
+                        {{ item.product_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ item.quantity.label(class="form-label") }}
+                        {{ item.quantity(class="form-control") }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="button" id="add-item" class="btn btn-secondary mb-3">Добавить товар</button>
+        <button type="submit" class="btn btn-primary">Создать заказ</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+document.getElementById('order-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    this.submit();
+    });
+    const addButton = document.getElementById('add-item');
+    const container = document.getElementById('items-container');
+    let index = {{ form.items|length }};
+
+    addButton.addEventListener('click', function() {
+        const newItem = document.createElement('div');
+        newItem.className = 'item-row mb-3 border p-3';
+        newItem.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Товар</label>
+                    <select name="items-${index}-product_id" class="form-select" required>
+                        {% for id, name in form.items[0].form.product_id.choices %}
+                        <option value="{{ id }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Количество</label>
+                    <input type="number" name="items-${index}-quantity"
+                           class="form-control" min="1" value="1" required>
+                </div>
+            </div>
+        `;
+        container.appendChild(newItem);
+        index++;
+    });
+    document.querySelector('form').addEventListener('submit', function() {
+    console.log("Form submitting...");
+    console.log(document.querySelector('[name="shop_id"]').value);
+    });
+});
+</script>
+{% endblock %}

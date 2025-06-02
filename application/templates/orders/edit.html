@@ -1,0 +1,140 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Редактировать заказ #{{ order_id }}</h2>
+
+    <form method="POST" action="{{ url_for('orders.edit_order', order_id=order_id) }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label for="shop_id" class="form-label">Магазин</label>
+            {{ form.shop_id(class="form-select") }}
+            {% if form.shop_id.errors %}
+                <div class="text-danger">
+                    {% for error in form.shop_id.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <h4>Товары</h4>
+        {% for item in form.items %}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="{{ item.product_id.id }}" class="form-label">Товар</label>
+                {{ item.product_id(class="form-select") }}
+                {% if item.product_id.errors %}
+                    <div class="text-danger">
+                        {% for error in item.product_id.errors %}
+                            {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            </div>
+            <div class="col-md-3">
+                <label for="{{ item.quantity.id }}" class="form-label">Количество</label>
+                {{ item.quantity(class="form-control") }}
+                {% if item.quantity.errors %}
+                    <div class="text-danger">
+                        {% for error in item.quantity.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        <div class="mb-3">
+            {{ form.submit(class="btn btn-primary", value="Сохранить изменения") }}
+            <a href="{{ url_for('orders.order_details', order_id=order_id) }}" class="btn btn-secondary">Вернуться к деталям заказа</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+```
+
+### Изменения в `edit.html`
+- Заменил `<label for="{{ form.shop_id.id }}" ...>` на `<label for="shop_id" ...>` для избежания подсветки в PyCharm. Это безопасно, так как `form.shop_id` по умолчанию генерирует `<select id="shop_id">`.
+- Остальная часть шаблона осталась без изменений, так как она уже корректна и соответствует структуре `OrderForm`.
+
+### Проверка работоспособности
+1. **Запустите приложение**:
+   - Убедитесь, что `orders.py`, `forms.py`, и база данных настроены корректно.
+   - Перейдите на `/details/<order_id>` и кликните "Редактировать заказ" для перехода на `/edit/<order_id>`.
+2. **Проверьте форму**:
+   - Убедитесь, что форма отображается с предзаполненным магазином (`shop_id`) и товарами (`items`).
+   - Проверьте HTML в браузере (через "Просмотр кода"), чтобы убедиться, что `<select id="shop_id">` присутствует.
+3. **Отправка формы**:
+   - Измените магазин или товары и нажмите "Сохранить изменения".
+   - Проверьте, что вы перенаправлены на `/details/<order_id>`, и данные обновлены.
+4. **Проверка базы данных**:
+   ```sql
+   SELECT shop_id FROM orders WHERE id = <order_id>;
+   SELECT product_id, quantity FROM order_items WHERE order_id = <order_id>;
+   ```
+   Убедитесь, что данные соответствуют изменениям.
+5. **Логи**:
+   - Проверьте консольный вывод (`Order`, `Items`, `Form data`) для отладки.
+
+### Дополнительные рекомендации
+- **Подавление предупреждений PyCharm**:
+  Если вы хотите сохранить `form.shop_id.id`, но убрать подсветку, используйте комментарий:
+  ```html
+  {# noinspection PyUnresolvedReferences #}
+  <label for="{{ form.shop_id.id }}" class="form-label">Магазин</label>
+  ```
+- **Динамическое добавление товаров**:
+  Для добавления новых полей товаров добавьте JavaScript (см. предыдущий ответ) и увеличьте `max_entries` в `OrderForm`:
+  ```python
+  items = FieldList(FormField(OrderItemForm), min_entries=1, max_entries=50)
+  ```
+- **Проверка автодополнения**:
+  Убедитесь, что PyCharm знает о `Flask-WTF`. Установите зависимости:
+  ```bash
+  pip install Flask-WTF
+  ```
+  Настройте проект в PyCharm: `File > Settings > Project > Python Interpreter`.
+
+### Итог
+Обновлённый `edit.html` использует явный `id="shop_id"` для `<label>`, чтобы избежать подсветки в PyCharm, сохраняя полную функциональность. Код маршрута `edit_order` остаётся без изменений, так как он корректно работает с `OrderForm`. Если проблема с подсветкой сохраняется или нужны дополнительные улучшения (например, динамическое добавление/удаление товаров), дайте знать, и я помогу!

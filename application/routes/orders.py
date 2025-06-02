@@ -164,3 +164,121 @@ def order_details(order_id):
         current_app.logger.error(f"Error in order_details: {str(e)}")
         flash('Ошибка при загрузке деталей заказа', 'danger')
         return redirect(url_for('orders.list_orders'))
+
+@orders_bp.route('/edit/<int:order_id>', methods=['GET', 'POST'])
+@login_required
+def edit_order(order_id):
+    form = OrderForm()
+
+    try:
+        with mysql.connection.cursor() as cur:
+            # Получаем информацию о заказе
+            cur.execute("""
+                SELECT 
+                    o.id,
+                    o.shop_id
+                FROM 
+                    orders o
+                WHERE 
+                    o.id = %s
+            """, (order_id,))
+            order = cur.fetchone()
+
+            if not order:
+                flash('Заказ не найден', 'danger')
+                return redirect(url_for('orders.list_orders'))
+
+            # Заполняем выбор магазинов
+            cur.execute("SELECT id, name FROM shops")
+            shops = cur.fetchall()
+            shop_choices = [(shop['id'], shop['name']) for shop in shops]
+            form.shop_id.choices = shop_choices
+
+            # Заполняем выбор товаров
+            cur.execute("SELECT id, name FROM products")
+            products = cur.fetchall()
+            product_choices = [(prod['id'], prod['name']) for prod in products]
+            for item in form.items:
+                item.form.product_id.choices = product_choices
+
+            # Получаем текущие товары в заказе
+            cur.execute("""
+                SELECT 
+                    oi.product_id,
+                    oi.quantity
+                FROM 
+                    order_items oi
+                WHERE 
+                    oi.order_id = %s
+            """, (order_id,))
+            items = cur.fetchall()
+
+            # Обработка POST-запроса
+            if request.method == 'POST':
+                # Устанавливаем choices перед валидацией
+                form.shop_id.choices = shop_choices
+                for item in form.items:
+                    item.form.product_id.choices = product_choices
+
+                print(f"POST Form data: {form.data}")
+                print(f"POST Form errors: {form.errors}")
+                print(f"Shop choices: {shop_choices}")
+                print(f"Product choices: {product_choices}")
+
+                if form.validate_on_submit():
+                    try:
+                        # Обновляем магазин заказа
+                        cur.execute("UPDATE orders SET shop_id = %s WHERE id = %s",
+                                    (form.shop_id.data, order_id))
+
+                        # Удаляем все текущие товары из заказа
+                        cur.execute("DELETE FROM order_items WHERE order_id = %s", (order_id,))
+
+                        # Добавляем товары из формы
+                        for item in form.items:
+                            if item.form.product_id.data and item.form.quantity.data:
+                                cur.execute(
+                                    """INSERT INTO order_items 
+                                       (order_id, product_id, quantity) 
+                                       VALUES (%s, %s, %s)""",
+                                    (order_id, item.form.product_id.data, item.form.quantity.data)
+                                )
+                                print(f"Updated item: {item.form.product_id.data} x {item.form.quantity.data}")
+
+                        mysql.connection.commit()
+                        flash('Заказ успешно обновлён!', 'success')
+                        return redirect(url_for('orders.order_details', order_id=order_id))
+
+                    except Exception as e:
+                        mysql.connection.rollback()
+                        flash(f'Ошибка обновления заказа: {str(e)}', 'danger')
+                        print(f"Database error: {str(e)}")
+                else:
+                    flash('Ошибка валидации формы. Проверьте введённые данные.', 'danger')
+
+            # Предзаполняем форму текущими данными для GET-запроса или после неудачной валидации
+            form.shop_id.data = str(order['shop_id'])  # Преобразуем в строку для SelectField
+            # Очищаем текущие элементы формы
+            while len(form.items) > 0:
+                form.items.pop_entry()
+            # Заполняем форму данными из order_items
+            for item in items:
+                form.items.append_entry({
+                    'product_id': str(item['product_id']),  # Преобразуем в строку
+                    'quantity': item['quantity']
+                })
+            # Устанавливаем choices для всех полей товаров
+            for item in form.items:
+                item.form.product_id.choices = product_choices
+
+            # Отладочный вывод
+            print(f"Order: {order}")
+            print(f"Items: {items}")
+            print(f"Form data: {form.data}")
+
+            return render_template('orders/edit.html', form=form, order_id=order_id)
+
+    except Exception as e:
+        current_app.logger.error(f"Error in edit_order: {str(e)}")
+        flash('Ошибка при загрузке страницы редактирования', 'danger')
+        return redirect(url_for('orders.list_orders'))

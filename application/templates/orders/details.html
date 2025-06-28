@@ -86,10 +86,15 @@
     {% endif %}
 
     <div class="d-flex justify-content-between mt-3">
-        <a href="{{ url_for('orders.list_orders') }}" class="btn btn-primary">Вернуться к списку заказов</a>
-        <a href="{{ url_for('orders.edit_order', order_id=order.id) }}" class="btn btn-warning">
-        <i class="bi bi-pencil-square"></i> Редактировать заказ
+        <a href="{{ url_for('orders.list_orders') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку заказов
         </a>
+
+        {% if current_user.role in ['admin', 'moderator'] %}
+        <a href="{{ url_for('orders.edit_order', order_id=order.id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil-square"></i> Редактировать заказ
+        </a>
+        {% endif %}
     </div>
 
 </div>

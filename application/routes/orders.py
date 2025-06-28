@@ -1,7 +1,7 @@
 from itertools import product
 
 from flask import render_template, flash, redirect, url_for, request, Blueprint, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from application.extensions import mysql
 from ..forms import OrderForm
@@ -106,6 +106,11 @@ def list_orders():
 @orders_bp.route('/details/<int:order_id>')
 @login_required
 def order_details(order_id):
+
+    if current_user.role not in ['admin', 'moderator', 'operator']:
+        flash('У вас нет прав для просмотра деталей заказов', 'danger')
+        return redirect(url_for('main.dashboard'))
+
     try:
         with mysql.connection.cursor() as cur:
             # Получаем информацию о заказе и магазине
@@ -168,6 +173,11 @@ def order_details(order_id):
 @orders_bp.route('/edit/<int:order_id>', methods=['GET', 'POST'])
 @login_required
 def edit_order(order_id):
+
+    if current_user.role not in ['admin', 'moderator', 'operator']:
+        flash('У вас нет прав для редактирования заказов', 'danger')
+        return redirect(url_for('main.dashboard'))
+
     form = OrderForm()
 
     try:

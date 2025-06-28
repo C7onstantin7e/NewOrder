@@ -85,6 +85,12 @@
         </div>
     {% endif %}
 
-    <a href="{{ url_for('orders.list_orders') }}" class="btn btn-primary mt-3">Вернуться к списку заказов</a>
+    <div class="d-flex justify-content-between mt-3">
+        <a href="{{ url_for('orders.list_orders') }}" class="btn btn-primary">Вернуться к списку заказов</a>
+        <a href="{{ url_for('orders.edit_order', order_id=order.id) }}" class="btn btn-warning">
+        <i class="bi bi-pencil-square"></i> Редактировать заказ
+        </a>
+    </div>
+
 </div>
 {% endblock %}

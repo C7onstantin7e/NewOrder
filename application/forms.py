@@ -1,6 +1,11 @@
 from flask_wtf import FlaskForm
+from werkzeug.routing import ValidationError
 from wtforms import StringField, PasswordField, SelectField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, NumberRange
+from flask import request
+
+from application import mysql
+
 
 class LoginForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
@@ -37,6 +42,21 @@ class ShopForm(FlaskForm):
     name = StringField('Название магазина', validators=[DataRequired()])
     address = StringField('Адрес', validators=[DataRequired()])
     submit = SubmitField('Сохранить')
+
+    def validate_name(self, field):
+        # Проверка уникальности названия магазина
+        shop_id = request.view_args.get('shop_id', 0)
+
+        with mysql.connection.cursor() as cur:
+            cur.execute("""
+                SELECT id 
+                FROM shops 
+                WHERE name = %s AND id != %s
+            """, (field.data, shop_id))
+            existing = cur.fetchone()
+
+            if existing:
+                raise ValidationError('Магазин с таким названием уже существует')
 
 ## Подкласс если можно так сказать
 class OrderItemForm(FlaskForm):

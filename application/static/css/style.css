@@ -57,3 +57,52 @@ body {
 .alert {
     margin-top: 20px;
 }
+
+/* Плавные переходы */
+.btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Эффект при наведении */
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Акцент для основной кнопки */
+.btn-primary {
+    background: linear-gradient(to right, #0d6efd, #0b5ed7);
+    border: none;
+}
+
+/* Анимация клика */
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* Стили для таблицы магазинов */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Иконки действий */
+.btn-group .btn {
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Карточка формы */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card-body {
+    padding: 2rem;
+}

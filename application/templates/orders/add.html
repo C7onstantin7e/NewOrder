@@ -7,77 +7,100 @@
     <form method="POST" id="order-form">
         {{ form.hidden_tag() }}
 
-        <div class="mb-3">
-            {{ form.shop_id.label(class="form-label") }}
+        <div class="mb-4">
+            {{ form.shop_id.label(class="form-label fw-bold") }}
             {{ form.shop_id(class="form-select") }}
         </div>
 
-        <h4>Товары:</h4>
+        <h4 class="mb-3">Товары:</h4>
 
         <div id="items-container">
             {% for item in form.items %}
-            <div class="item-row mb-3 border p-3">
-                <div class="row">
-                    <div class="col-md-6">
+            <div class="item-row mb-3 border p-3 rounded">
+                <div class="row align-items-center">
+                    <!-- Товар - прижат к левому краю -->
+                    <div class="col-md-7">
                         {{ item.product_id.label(class="form-label") }}
                         {{ item.product_id(class="form-select") }}
                     </div>
-                    <div class="col-md-4">
-                        {{ item.quantity.label(class="form-label") }}
-                        {{ item.quantity(class="form-control") }}
+
+                    <!-- Количество - прижато к правому краю -->
+                    <div class="col-md-5 d-flex justify-content-end">
+                        <div class="w-100">
+                            {{ item.quantity.label(class="form-label") }}
+                            <div class="d-flex align-items-center gap-2">
+                                {{ item.quantity(class="form-control") }}
+                                <!-- Добавим кнопку удаления -->
+                                <button type="button" class="btn btn-sm btn-danger remove-item mt-2">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <button type="button" id="add-item" class="btn btn-outline-secondary">
-                    <i class="bi bi-plus"></i> Добавить товар
-                </button>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Создать заказ
-                </button>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <button type="button" id="add-item" class="btn btn-outline-primary">
+                <i class="bi bi-plus-lg me-2"></i> Добавить товар
+            </button>
+            <button type="submit" class="btn btn-success px-4 py-2 fw-bold">
+                <i class="bi bi-check2-circle me-2"></i> Создать заказ
+            </button>
+        </div>
     </form>
 </div>
 
+<!-- Добавим JavaScript для динамического управления товарами -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-document.getElementById('order-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    this.submit();
-    });
-    const addButton = document.getElementById('add-item');
-    const container = document.getElementById('items-container');
-    let index = {{ form.items|length }};
+    // Добавление нового товара
+    document.getElementById('add-item').addEventListener('click', function() {
+        const container = document.getElementById('items-container');
+        const index = container.children.length;
 
-    addButton.addEventListener('click', function() {
         const newItem = document.createElement('div');
-        newItem.className = 'item-row mb-3 border p-3';
+        newItem.className = 'item-row mb-3 border p-3 rounded';
         newItem.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
+            <div class="row align-items-center">
+                <div class="col-md-7">
                     <label class="form-label">Товар</label>
-                    <select name="items-${index}-product_id" class="form-select" required>
-                        {% for id, name in form.items[0].form.product_id.choices %}
-                        <option value="{{ id }}">{{ name }}</option>
+                    <select name="items-${index}-product_id" class="form-select">
+                        {% for value, label in form.items[0].product_id.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Количество</label>
-                    <input type="number" name="items-${index}-quantity"
-                           class="form-control" min="1" value="1" required>
+                <div class="col-md-5 d-flex justify-content-end">
+                    <div class="w-100">
+                        <label class="form-label">Количество</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" name="items-${index}-quantity"
+                                   class="form-control" value="1" min="1">
+                            <button type="button" class="btn btn-sm btn-danger remove-item mt-2">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
+
         container.appendChild(newItem);
-        index++;
     });
-    document.querySelector('form').addEventListener('submit', function() {
-    console.log("Form submitting...");
-    console.log(document.querySelector('[name="shop_id"]').value);
+
+    // Удаление товара
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-item')) {
+            const itemRow = e.target.closest('.item-row');
+            if (document.querySelectorAll('.item-row').length > 1) {
+                itemRow.remove();
+            } else {
+                alert('Должен остаться хотя бы один товар в заказе');
+            }
+        }
     });
 });
 </script>

@@ -28,14 +28,11 @@
                                 <li><a class="dropdown-item" href="{{ url_for('products.add_multi_products') }}">Массовое добавление</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Магазины
+<!-- В навигационном меню -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('shops.list_shops') }}">
+                                <i class="bi bi-shop"></i> Магазины
                             </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ url_for('shops.list_shops') }}">Список магазинов</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('shops.add_shop') }}">Добавить магазин</a></li>
-                            </ul>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">

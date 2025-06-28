@@ -28,11 +28,12 @@ class User(UserMixin):
 
 
 class Product:
-    def __init__(self, id, name, manufacturer, price):
+    def __init__(self, id, name, manufacturer, price, unit='шт'):
         self.id = id
         self.name = name
         self.manufacturer = manufacturer
         self.price = price
+        self.unit = unit  # 'kg' или 'piece'
 
 
 class Shop:

@@ -6,19 +6,21 @@ from ..forms import ProductForm, MultiProductForm
 
 products_bp = Blueprint('products', __name__, url_prefix='/products')
 
-@products_bp.route('/')
+@products_bp.route('/list')
 @login_required
 def list_products():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM products")
-    products = cur.fetchall()
-    cur.close()
-    return render_template('products/list.html', products=products)
+    try:
+        with mysql.connection.cursor() as cur:
+            cur.execute("SELECT id, name, manufacturer, price, unit FROM products")
+            products = cur.fetchall()
+            return render_template('products/list.html', products=products)
+    except Exception as e:
+        flash(f'Ошибка при загрузке списка товаров: {str(e)}', 'danger')
+        return redirect(url_for('main.dashboard'))
 
 @products_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
-
     if current_user.role != 'admin':
         flash('У вас нет прав для добавления продуктов', 'danger')
         return redirect(url_for('products.list_products'))
@@ -27,9 +29,9 @@ def add_product():
     if form.validate_on_submit():
         cur = mysql.connection.cursor()
         cur.execute("""
-            INSERT INTO products (name, manufacturer, price)
-            VALUES (%s, %s, %s)
-        """, (form.name.data, form.manufacturer.data, form.price.data))
+            INSERT INTO products (name, manufacturer, price, unit)
+            VALUES (%s, %s, %s, %s)
+        """, (form.name.data, form.manufacturer.data, form.price.data, form.unit.data))
         mysql.connection.commit()
         cur.close()
         flash('Товар добавлен!', 'success')

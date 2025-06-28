@@ -29,11 +29,13 @@ def init_db():
 
         # 3. Создаем таблицу магазинов
         cur.execute("""
-            CREATE TABLE shops (
+            CREATE TABLE products (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
-                address VARCHAR(255) NOT NULL
-            ) ENGINE=InnoDB
+                manufacturer VARCHAR(100) NOT NULL,
+                price INT NOT NULL,
+                unit ENUM('кг', 'шт') NOT NULL DEFAULT 'шт'
+            ) ENGINE=InnoDB;
         """)
 
         # 4. Создаем таблицу товаров

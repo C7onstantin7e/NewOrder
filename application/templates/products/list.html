@@ -21,6 +21,7 @@
                     <th>Название</th>
                     <th>Производитель</th>
                     <th>Цена</th>
+                    <th>Ед. изм.</th> <!-- Новая колонка -->
                 </tr>
             </thead>
             <tbody>
@@ -30,6 +31,7 @@
                     <td>{{ product.name }}</td>
                     <td>{{ product.manufacturer }}</td>
                     <td>{{ product.price }} ₽</td>
+                    <td>{{ 'кг' if product.unit == 'kg' else 'шт' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -3,7 +3,7 @@ from werkzeug.routing import ValidationError
 from wtforms import StringField, PasswordField, SelectField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, NumberRange
 from flask import request
-
+from wtforms import StringField, IntegerField, FieldList, FormField, SubmitField
 from application import mysql
 
 
@@ -23,12 +23,16 @@ class RegistrationForm(FlaskForm):
     ], validators=[DataRequired()])
     submit = SubmitField('Зарегистрироваться')
 
-from wtforms import StringField, IntegerField, FieldList, FormField, SubmitField
+
 
 class ProductItemForm(FlaskForm):
-    name = StringField('Название', validators=[DataRequired()])
+    name = StringField('Название товара', validators=[DataRequired()])
     manufacturer = StringField('Производитель', validators=[DataRequired()])
-    price = IntegerField('Цена', validators=[DataRequired(), NumberRange(min=1)])
+    price = IntegerField('Цена (в тенге)', validators=[DataRequired()])
+    unit = SelectField('Единица измерения',
+                       choices=[('piece', 'Штуки'), ('kg', 'Килограммы')],
+                       default='piece')
+    submit = SubmitField('Сохранить')
 
 class MultiProductForm(FlaskForm):
     products = FieldList(

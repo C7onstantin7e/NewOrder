@@ -10,7 +10,7 @@ shops_bp = Blueprint('shops', __name__, url_prefix='/shops')
 @login_required
 def list_shops():
     # Проверка прав доступа
-    if current_user.role not in ['admin', 'moderator']:
+    if current_user.role not in ['admin', 'moderator', 'operator']:
         flash('У вас нет прав для просмотра этой страницы', 'danger')
         return redirect(url_for('main.dashboard'))
 

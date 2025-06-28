@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from ..extensions import mysql
 from ..models import Product
 from ..forms import ProductForm, MultiProductForm
@@ -18,6 +18,11 @@ def list_products():
 @products_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
+
+    if current_user.role != 'admin':
+        flash('У вас нет прав для добавления продуктов', 'danger')
+        return redirect(url_for('products.list_products'))
+
     form = ProductForm()
     if form.validate_on_submit():
         cur = mysql.connection.cursor()

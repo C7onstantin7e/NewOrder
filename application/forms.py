@@ -1,11 +1,9 @@
 from flask_wtf import FlaskForm
 from werkzeug.routing import ValidationError
-from wtforms import StringField, PasswordField, SelectField, IntegerField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, NumberRange
+from wtforms import StringField, PasswordField, SelectField, IntegerField, SubmitField, FieldList, FormField, HiddenField
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 from flask import request
-from wtforms import StringField, IntegerField, FieldList, FormField, SubmitField
 from application import mysql
-
 
 class LoginForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
@@ -22,8 +20,6 @@ class RegistrationForm(FlaskForm):
         ('admin', 'Администратор')
     ], validators=[DataRequired()])
     submit = SubmitField('Зарегистрироваться')
-
-
 
 class ProductItemForm(FlaskForm):
     name = StringField('Название товара', validators=[DataRequired()])
@@ -48,28 +44,22 @@ class ShopForm(FlaskForm):
     submit = SubmitField('Сохранить')
 
     def validate_name(self, field):
-        # Проверка уникальности названия магазина
         shop_id = request.view_args.get('shop_id', 0)
-
         with mysql.connection.cursor() as cur:
-            cur.execute("""
-                SELECT id 
-                FROM shops 
-                WHERE name = %s AND id != %s
-            """, (field.data, shop_id))
+            cur.execute("SELECT id FROM shops WHERE name = %s AND id != %s", (field.data, shop_id))
             existing = cur.fetchone()
-
             if existing:
                 raise ValidationError('Магазин с таким названием уже существует')
 
-## Подкласс если можно так сказать
 class OrderItemForm(FlaskForm):
-    product_id = SelectField('Товар', coerce=int, choices=[])
-    quantity = IntegerField('Количество', validators=[DataRequired(), NumberRange(min=1)])
+    product_id = HiddenField('ID товара', validators=[DataRequired()])
+    quantity = IntegerField('Количество', validators=[
+        DataRequired(),
+        NumberRange(min=1, message="Количество должно быть не менее 1")
+    ])
 
-## Order.py
 class OrderForm(FlaskForm):
-    shop_id = SelectField('Магазин', coerce=int, choices=[])
+    shop_id = HiddenField('ID магазина', validators=[DataRequired()])
     items = FieldList(FormField(OrderItemForm), min_entries=1)
     submit = SubmitField('Создать заказ')
 

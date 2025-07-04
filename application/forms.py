@@ -26,8 +26,8 @@ class ProductItemForm(FlaskForm):
     manufacturer = StringField('Производитель', validators=[DataRequired()])
     price = IntegerField('Цена (в тенге)', validators=[DataRequired()])
     unit = SelectField('Единица измерения',
-                       choices=[('piece', 'Штуки'), ('kg', 'Килограммы')],
-                       default='piece')
+                       choices=[('piece', 'шт'), ('kg', 'кг')],
+                       default='шт')
     submit = SubmitField('Сохранить')
 
 class MultiProductForm(FlaskForm):
@@ -66,5 +66,8 @@ class OrderForm(FlaskForm):
 class ProductForm(FlaskForm):
     name = StringField('Название товара', validators=[DataRequired()])
     manufacturer = StringField('Производитель', validators=[DataRequired()])
-    price = IntegerField('Цена', validators=[DataRequired(), NumberRange(min=1)])
+    price = IntegerField('Цена (в тенге)', validators=[DataRequired()])
+    unit = SelectField('Единица измерения',
+                       choices=[('piece', 'шт'), ('kg', 'кг')],
+                       default='шт')
     submit = SubmitField('Сохранить')

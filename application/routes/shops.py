@@ -5,6 +5,40 @@ from ..forms import ShopForm
 
 shops_bp = Blueprint('shops', __name__, url_prefix='/shops')
 
+# Добавляем новый маршрут для создания магазина
+@shops_bp.route('/add', methods=['GET', 'POST'])
+@login_required
+def add_shop():
+    # Проверка прав доступа
+    if current_user.role not in ['admin', 'moderator']:
+        flash('У вас нет прав для добавления магазинов', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    form = ShopForm()
+
+    if form.validate_on_submit():
+        try:
+            with mysql.connection.cursor() as cur:
+                # Проверка уникальности названия
+                cur.execute("SELECT id FROM shops WHERE name = %s", (form.name.data,))
+                if cur.fetchone():
+                    flash('Магазин с таким названием уже существует', 'danger')
+                    return render_template('shops/add.html', form=form)
+
+                # Добавление нового магазина
+                cur.execute(
+                    "INSERT INTO shops (name, address) VALUES (%s, %s)",
+                    (form.name.data, form.address.data)
+                )
+                mysql.connection.commit()
+                flash('Магазин успешно добавлен!', 'success')
+                return redirect(url_for('shops.list_shops'))
+
+        except Exception as e:
+            flash(f'Ошибка при добавлении магазина: {str(e)}', 'danger')
+
+    return render_template('shops/add.html', form=form)
+
 
 @shops_bp.route('/')
 @login_required
